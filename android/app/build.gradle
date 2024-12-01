@@ -23,6 +23,17 @@ if (flutterVersionName == null) {
 }
 
 android {
+
+    defaultConfig {
+        // ... other configs ...
+        manifestPlaceholders += [
+            'SUPABASE_URL': 'https://tffjhjefttkhiiebwlhj.supabase.co',
+            'SUPABASE_ANON_KEY': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmZmpoamVmdHRraGlpZWJ3bGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzExOTY3ODksImV4cCI6MjA0Njc3Mjc4OX0.jAhFewyVHbn_SWiLqMcID9Lu4k-sCXbeFOJptbp5a-s'
+        ]
+        minSdkVersion 19
+    }
+
+
     namespace "com.example.deliverynotifications"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion

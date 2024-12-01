@@ -29,6 +29,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Add these permissions -->
+        <uses-permission android:name="android.permission.INTERNET"/>
+        <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and
