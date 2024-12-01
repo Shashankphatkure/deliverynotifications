@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
-import 'dart:ui' as ui;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+
+// Conditionally import web-specific libraries
+import 'web_view_web.dart' if (dart.library.html) 'web_view_web.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,17 +55,6 @@ class _DeliveryWebViewState extends State<DeliveryWebView> {
     super.initState();
     if (!kIsWeb) {
       initWebView();
-    } else {
-      // Register view factory for web
-      // ignore: undefined_prefixed_name
-      ui.platformViewRegistry.registerViewFactory(
-        'iframeElement',
-        (int viewId) => html.IFrameElement()
-          ..src = 'https://deliveryapp-tan.vercel.app/login'
-          ..style.border = 'none'
-          ..style.height = '100%'
-          ..style.width = '100%',
-      );
     }
   }
 
@@ -135,13 +125,7 @@ class _DeliveryWebViewState extends State<DeliveryWebView> {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      return Scaffold(
-        body: SafeArea(
-          child: HtmlElementView(
-            viewType: 'iframeElement',
-          ),
-        ),
-      );
+      return getWebView(); // This will be defined in web_view_web.dart
     }
 
     return Scaffold(
