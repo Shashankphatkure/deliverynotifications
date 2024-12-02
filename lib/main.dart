@@ -5,6 +5,9 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'dart:async';
 
 // Conditionally import web-specific libraries
 import 'web_view_stub.dart' if (dart.library.html) 'web_view_web.dart';
@@ -112,6 +115,67 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   User? _user;
+  Timer? _locationTimer;
+  StreamSubscription<Position>? _positionStreamSubscription;
+
+  Future<String> _getAddressFromLatLng(Position position) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        return '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+      }
+      return '${position.latitude},${position.longitude}';
+    } catch (e) {
+      print('Error getting address: $e');
+      return '${position.latitude},${position.longitude}';
+    }
+  }
+
+  Future<void> _startLocationTracking() async {
+    // Request location permissions
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        print('Location permissions denied');
+        return;
+      }
+    }
+
+    // Start periodic location updates
+    _locationTimer = Timer.periodic(const Duration(minutes: 3), (timer) async {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        // Get address from coordinates
+        String address = await _getAddressFromLatLng(position);
+        
+        // Update location in Supabase
+        if (_user != null) {
+          await supabase.from('users').update({
+            'location': address,
+            'updated_at': DateTime.now().toIso8601String(),
+          }).eq('auth_id', _user!.id);
+          
+          print('Location updated: $address');
+        }
+      } catch (e) {
+        print('Error updating location: $e');
+      }
+    });
+  }
+
+  void _stopLocationTracking() {
+    _locationTimer?.cancel();
+    _positionStreamSubscription?.cancel();
+  }
 
   @override
   void initState() {
@@ -120,8 +184,26 @@ class _AuthWrapperState extends State<AuthWrapper> {
     supabase.auth.onAuthStateChange.listen((event) {
       setState(() {
         _user = event.session?.user;
+        
+        // Start or stop location tracking based on auth state
+        if (_user != null) {
+          _startLocationTracking();
+        } else {
+          _stopLocationTracking();
+        }
       });
     });
+    
+    // Start location tracking if user is already logged in
+    if (_user != null) {
+      _startLocationTracking();
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopLocationTracking();
+    super.dispose();
   }
 
   @override
