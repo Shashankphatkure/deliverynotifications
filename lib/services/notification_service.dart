@@ -1,39 +1,41 @@
-import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NotificationService {
+  static final supabase = Supabase.instance.client;
+
   static Future<void> sendNotification({
-    required String userId,
+    required String recipientId,
     required String title,
     required String message,
-    Map<String, dynamic>? additionalData,
+    required String type,
   }) async {
-    if (kIsWeb) return; // Don't send notifications from web
-
     try {
-      await OneSignal.User.addTagWithKey("user_id", userId);
-      
-      await OneSignal.Notifications.postNotification(
-        OSCreateNotification(
-          playerIds: [userId],
-          content: message,
-          heading: title,
-          additionalData: additionalData,
-        ),
+      final response = await supabase.functions.invoke(
+        'send-notification',
+        body: {
+          'recipientId': recipientId,
+          'title': title,
+          'message': message,
+          'type': type,
+        },
       );
+
+      if (response.status != 200) {
+        throw Exception('Failed to send notification: ${response.data}');
+      }
+
+      print('Notification sent successfully: ${response.data}');
     } catch (e) {
       print('Error sending notification: $e');
+      rethrow;
     }
   }
 
-  static Future<String?> getDeviceId() async {
-    if (kIsWeb) return null;
-    
-    try {
-      return OneSignal.User.pushSubscription.id;
-    } catch (e) {
-      print('Error getting device ID: $e');
-      return null;
-    }
+  static Stream<List<Map<String, dynamic>>> getNotificationLogs() {
+    return supabase
+        .from('notification_logs')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((list) => list.map((item) => item as Map<String, dynamic>).toList());
   }
 } 
