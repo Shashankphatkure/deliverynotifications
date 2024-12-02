@@ -290,7 +290,7 @@ class _DeliveryWebViewState extends State<DeliveryWebView> {
             },
           ),
         )
-        ..loadRequest(Uri.parse('https://deliveryapp-tan.vercel.app'));
+        ..loadRequest(Uri.parse('https://deliveryapp-tan.vercel.app/orders'));
 
       if (mounted) {
         setState(() {
