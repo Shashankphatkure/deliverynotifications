@@ -8,6 +8,9 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 // Conditionally import web-specific libraries
 import 'web_view_stub.dart' if (dart.library.html) 'web_view_web.dart';
@@ -177,15 +180,31 @@ class _AuthWrapperState extends State<AuthWrapper> {
     _positionStreamSubscription?.cancel();
   }
 
+  Future<void> _requestPermissions() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.camera,
+      Permission.storage,
+      Permission.photos,
+      Permission.location,
+    ].request();
+
+    statuses.forEach((permission, status) {
+      print('$permission: $status');
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _user = supabase.auth.currentUser;
+    
+    // Request permissions when app starts
+    _requestPermissions();
+
     supabase.auth.onAuthStateChange.listen((event) {
       setState(() {
         _user = event.session?.user;
         
-        // Start or stop location tracking based on auth state
         if (_user != null) {
           _startLocationTracking();
         } else {
@@ -194,7 +213,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       });
     });
     
-    // Start location tracking if user is already logged in
     if (_user != null) {
       _startLocationTracking();
     }
@@ -441,5 +459,30 @@ class _DeliveryWebViewState extends State<DeliveryWebView> {
         ),
       ),
     );
+  }
+}
+
+Future<void> pickImage() async {
+  final ImagePicker picker = ImagePicker();
+  try {
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      // Handle the image file
+      print('Image path: ${image.path}');
+    }
+  } catch (e) {
+    print('Error picking image: $e');
+  }
+}
+
+Future<void> pickFile() async {
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null) {
+      // Handle the picked file
+      print('File path: ${result.files.single.path}');
+    }
+  } catch (e) {
+    print('Error picking file: $e');
   }
 }

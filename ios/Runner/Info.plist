@@ -51,5 +51,11 @@
 	<string>This app needs access to location when in the background for delivery tracking.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to location when open and in the background for delivery tracking.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to capture photos for delivery proof and documentation.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photos for uploading delivery-related images.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for video capture if needed.</string>
 </dict>
 </plist>
